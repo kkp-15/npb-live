@@ -1,0 +1,60 @@
+{
+ "date": "2026-06-13",
+ "updated_at": "2026-06-13T18:14:25+09:00",
+ "games": [
+  {
+   "home": "日本ハム",
+   "away": "中日",
+   "status": "final",
+   "label": "試合終了",
+   "venue": "エスコンF",
+   "score_home": 4,
+   "score_away": 3
+  },
+  {
+   "home": "楽天",
+   "away": "広島",
+   "status": "final",
+   "label": "試合終了",
+   "venue": "楽天モバイル",
+   "score_home": 0,
+   "score_away": 2
+  },
+  {
+   "home": "西武",
+   "away": "巨人",
+   "status": "live",
+   "label": "1回裏",
+   "venue": "ベルーナ",
+   "score_home": 0,
+   "score_away": 1
+  },
+  {
+   "home": "ロッテ",
+   "away": "DeNA",
+   "status": "final",
+   "label": "試合終了",
+   "venue": "ZOZOマリン",
+   "score_home": 6,
+   "score_away": 16
+  },
+  {
+   "home": "オリックス",
+   "away": "阪神",
+   "status": "live",
+   "label": "9回表",
+   "venue": "京セラD大阪",
+   "score_home": 3,
+   "score_away": 6
+  },
+  {
+   "home": "ソフトバンク",
+   "away": "ヤクルト",
+   "status": "final",
+   "label": "試合終了",
+   "venue": "みずほPayPay",
+   "score_home": 8,
+   "score_away": 1
+  }
+ ]
+}

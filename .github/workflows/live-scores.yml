@@ -1,0 +1,75 @@
+name: live-scores
+
+# NPB公式から当日スコアを取得し data/live.json を更新する。
+# 朝7時に1回（会場・開始時刻の確保）＋試合時間帯（JST 13:00〜23:59）に約20分毎に実行。
+# amend + force push で履歴を1コミットに保つ。
+# 配信: https://raw.githubusercontent.com/kkp-15/npb-live/main/data/live.json
+on:
+  schedule:
+    - cron: '0 22 * * *'        # UTC 22:00 = JST 7:00（朝1回: 当日の会場・開始時刻を確保）
+    - cron: '*/20 4-14 * * *'   # UTC 4:00-14:59 = JST 13:00-23:59（デーゲーム対応で窓を拡大）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-scores
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install -q requests beautifulsoup4
+
+      - name: Fetch live scores
+        run: python update_live_scores.py
+
+      - name: 全試合終了を検知したら本体（npb-magic）の全体更新を起動
+        env:
+          GH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
+        run: |
+          # DISPATCH_TOKEN未設定ならスキップ（仕組みだけ先行導入）
+          if [ -z "$GH_TOKEN" ]; then echo "no token, skip"; exit 0; fi
+          TODAY=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          MARKER=$(cat data/dispatched.txt 2>/dev/null || echo "")
+          DONE=$(python3 - << 'PY'
+          import json
+          d = json.load(open('data/live.json'))
+          gs = d.get('games', [])
+          terminal = all(g.get('status') in ('final', 'cancelled') for g in gs)
+          print('yes' if gs and terminal and d.get('date') else 'no')
+          PY
+          )
+          if [ "$DONE" = "yes" ] && [ "$MARKER" != "$TODAY" ]; then
+            echo "全試合終了 → npb-magic全体更新を起動"
+            # gh CLIはGraphQLの事前チェックで追加権限を要求するためREST直叩き
+            curl -sf -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              https://api.github.com/repos/kkp-15/npb-magic/actions/workflows/update-standings.yml/dispatches \
+              -d '{"ref":"main"}' 
+            echo "$TODAY" > data/dispatched.txt
+          else
+            echo "skip (done=$DONE marker=$MARKER)"
+          fi
+
+      - name: Commit (amend + force push)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/live.json data/dispatched.txt 2>/dev/null || git add data/live.json
+          if git diff --cached --quiet; then
+            echo "no changes"
+            exit 0
+          fi
+          git commit --amend -q -m "live: $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -qf origin main
