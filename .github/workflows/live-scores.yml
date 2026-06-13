@@ -1,13 +1,13 @@
 name: live-scores
 
+# 【非稼働】ライブ取得はCloudflare Worker(npb-live-worker)に移行済み。本ワークフローは手動フォールバックのみ。
 # NPB公式から当日スコアを取得し data/live.json を更新する。
 # 朝7時に1回（会場・開始時刻の確保）＋試合時間帯（JST 13:00〜23:59）に約20分毎に実行。
 # amend + force push で履歴を1コミットに保つ。
 # 配信: https://raw.githubusercontent.com/kkp-15/npb-live/main/data/live.json
 on:
-  schedule:
-    - cron: '0 22 * * *'        # UTC 22:00 = JST 7:00（朝1回: 当日の会場・開始時刻を確保）
-    - cron: '*/20 4-14 * * *'   # UTC 4:00-14:59 = JST 13:00-23:59（デーゲーム対応で窓を拡大）
+  # 2026-06-13: ライブ取得は Cloudflare Worker（npb-live-worker）に全面移行。
+  # GitHubのscheduleは無料リポで間引かれ機能しなかったため停止。手動実行のみ残置（緊急フォールバック）。
   workflow_dispatch:
 
 permissions:
